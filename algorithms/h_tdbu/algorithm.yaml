@@ -1,0 +1,92 @@
+name: "H-TDBU Forest (RF condizionale)"
+backend: python
+entry: adapter.py
+python_env: h_tdbu
+authors: ["Junfeng Nie", "Alvin Jin", "Xiaohui Chen"]
+reference: "https://arxiv.org/abs/2605.28198"
+description:
+  it: |
+    Generatore **sequenziale condizionale con Random Forest**, ispirato al
+    framework ibrido top-down/bottom-up H-TDBU (Nie, Jin, Chen, ICML 2026).
+    Le colonne sono generate una alla volta: la prima è ricampionata dai dati
+    reali, ognuna delle successive è predetta da una foresta addestrata sulle
+    colonne già generate (classe campionata dalle probabilità per le
+    categoriche, predizione più residuo ricampionato per le numeriche).
+    Codice originale: https://github.com/junfengn-ctrl/hierarchical-synthetic-tabular (MIT).
+    Limiti: il risultato dipende dall'ordine delle colonne; i valori numerici
+    mancanti sono riprodotti solo come percentuale, a caso; la parte con regole
+    top-down e LLM del paper non è inclusa.
+  en: |
+    **Sequential conditional Random Forest** generator, inspired by the hybrid
+    top-down/bottom-up H-TDBU framework (Nie, Jin, Chen, ICML 2026).
+    Columns are generated one at a time: the first is resampled from the real
+    data, each following one is predicted by a forest trained on the columns
+    generated so far (class sampled from the probabilities for categorical
+    columns, prediction plus resampled residual for numeric ones).
+    Original code: https://github.com/junfengn-ctrl/hierarchical-synthetic-tabular (MIT).
+    Limitations: results depend on column order; missing numeric values are reproduced
+    only as a share, at random; the top-down rules / LLM part of the
+    paper is not included.
+
+params:
+  - name: max_trees
+    label: {it: "Alberi per foresta", en: "Trees per forest"}
+    type: integer
+    default: 30
+    min: 1
+    max: 1000
+    help: {it: "Numero di alberi di ogni Random Forest (30 come nel paper).", en: "Number of trees in each Random Forest (30 as in the paper)."}
+
+  - name: max_condition_cols
+    label: {it: "Colonne di condizionamento", en: "Conditioning columns"}
+    type: integer
+    default: 12
+    min: 1
+    max: 200
+    help: {it: "Quante delle colonne già generate usa ogni foresta come input (al massimo).", en: "How many of the previously generated columns each forest uses as input (at most)."}
+
+  - name: max_training_rows
+    label: {it: "Righe massime di addestramento", en: "Max training rows"}
+    type: integer
+    default: 5000
+    min: 100
+    max: 200000
+    help: {it: "Se i dati reali sono di più, si usa un sottocampione di questa dimensione.", en: "If the real data is larger, a subsample of this size is used."}
+
+  - name: column_order
+    label: {it: "Ordine delle colonne", en: "Column order"}
+    type: choice
+    choices: [original, random]
+    default: original
+    help: {it: "original = come nel file; random = ordine casuale (dipende dal seed).", en: "original = as in the file; random = random order (depends on the seed)."}
+
+  - name: reproduce_missing
+    label: {it: "Riproduci i valori mancanti", en: "Reproduce missing values"}
+    type: logical
+    default: true
+    help: {it: "Se attivo, le colonne numeriche con mancanti ne avranno la stessa percentuale nei dati sintetici (a caso). Se spento, i dati sintetici sono completi.", en: "If on, numeric columns with missing values get the same share of missing values in the synthetic data (at random). If off, the synthetic data is complete."}
+
+  - name: max_depth
+    label: {it: "Profondità massima degli alberi", en: "Max tree depth"}
+    type: integer
+    default: 12
+    min: 1
+    max: 100
+    advanced: true
+
+  - name: min_samples_leaf
+    label: {it: "Campioni minimi per foglia", en: "Min samples per leaf"}
+    type: integer
+    default: 5
+    min: 1
+    max: 1000
+    advanced: true
+
+  - name: low_cardinality_threshold
+    label: {it: "Soglia interi categorici", en: "Integer-as-categorical threshold"}
+    type: integer
+    default: 20
+    min: 2
+    max: 1000
+    advanced: true
+    help: {it: "Una colonna intera con al più questi valori distinti è trattata come categorica (es. target 0/1).", en: "An integer column with at most this many distinct values is treated as categorical (e.g. a 0/1 target)."}
